@@ -1,9 +1,7 @@
 import numpy as np
 from skimage import io
 import os
-import matplotlib.pyplot as plt
-import cv2
-import scipy
+
 
 
 def verificar_imagen(path_imagen: str) -> np.array:
