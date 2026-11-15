@@ -30,19 +30,43 @@ def evaluar(P_hat, P_GT):
 
 
 
-# TESTEO 
-P_GT = np.arange(1, 17).reshape(4, 4)
 
-# Reconstrucción correcta
-assert evaluar(P_GT.copy(), P_GT) == (1.0, 1.0)
 
-# Desplazamiento circular de una columna
-P_hat = np.roll(P_GT, 1, axis=1)
-A_pos, A_adj = evaluar(P_hat, P_GT)
-assert A_pos == 0.0
-assert np.isclose(A_adj, 20 / 24)
+if __name__ == "__main__":
 
-# La transposición convierte rota bien los vecinos
-assert evaluar(P_GT.T, P_GT) == (0.25, 0.0)
+    # TESTEO 
+    P_GT = np.arange(1, 17).reshape(4, 4)
 
-print("Las tres pruebas pasaron yippiee .")
+    # Reconstrucción correcta
+    assert evaluar(P_GT.copy(), P_GT) == (1.0, 1.0)
+
+    # Desplazamiento circular de una columna
+    P_hat = np.roll(P_GT, 1, axis=1)
+    A_pos, A_adj = evaluar(P_hat, P_GT)
+    assert A_pos == 0.0
+    assert np.isclose(A_adj, 20 / 24)
+
+    # La transposición convierte rota bien los vecinos
+    assert evaluar(P_GT.T, P_GT) == (0.25, 0.0)
+
+    print("Las tres pruebas pasaron yippiee .")
+
+
+
+    # Evaluación de los casos de prueba
+    carpeta = Path(__file__).resolve().parent
+    # aca hay q agregar pares de rutas (estimación, referencia) por cada caso. Segun los testeos deberia funcionar
+    casos = [
+        ("P_hat.npy", "evaluacion/referencia.npz"),
+    ]
+
+    completas = 0
+    for estimacion, referencia in casos:
+        P_hat = np.load(carpeta / estimacion, allow_pickle=False)
+        with np.load(carpeta / referencia, allow_pickle=False) as ref:
+            A_pos, A_adj = evaluar(P_hat, ref["P_GT"])
+
+        completas += int(A_pos == 1.0)
+        print(f"{estimacion}  A_pos = {A_pos:.2%}  A_adj = {A_adj:.2%}")
+
+    print(f"Reconstrucciones completas: {completas}/{len(casos)} ({completas / len(casos):.2%})")
