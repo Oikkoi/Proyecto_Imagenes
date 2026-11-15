@@ -52,7 +52,7 @@ def verificar_medidas(imagen: np.array, R: int, C: int, d: int):
     return ((s_alto, s_ancho), (parche_alto, parche_ancho), (R, C, d))
 
 
-def slicing(imagen: np.array, tupla_s_p: tuple):
+def generar_mosaico(imagen: np.array, tupla_s_p: tuple, seed: int):
     alto, ancho, _ = imagen.shape
     tupla_s, tupla_p, parametros = tupla_s_p
     s_alto, s_ancho = tupla_s
@@ -65,15 +65,81 @@ def slicing(imagen: np.array, tupla_s_p: tuple):
     los píxeles no considerados entre ambos bordes:
     """
 
+    # slicing imagen
     fila_inicial = (alto - H) // 2
     fila_fin = fila_inicial + H
     columna_inicial = (ancho - W) // 2
     columna_fin = columna_inicial + W
     sub_imagen = imagen[fila_inicial:fila_fin, columna_inicial:columna_fin]
-    return sub_imagen
+
+    # lienzo
+    zeros = np.zeros((H, W, 3), dtype=np.uint8)
+    parche_alto, parche_ancho = tupla_p
+    margen = d // 2
+    rng = np.random.default_rng(seed)
+    permutacion = rng.permutation(R * C)
+
+    matriz_identificadores = np.zeros((R, C), dtype=int)
+
+    for k, indice_real in enumerate(permutacion):
+        # Coordenadas de celda en el mosaico desordenado (r_s, c_s)
+        fila_mosaico = k // C
+        columna_mosaico = k % C
+
+        # Coordenadas de celda en la imagen recortada (r_t, c_t)
+        fila_real = indice_real // C
+        columna_real = indice_real % C
+
+        # Límites del recorte en sub_imagen
+        fila_real_inicial = fila_real * s_alto + margen
+        fila_real_fin = fila_real_inicial + parche_alto
+        columna_real_inicial = columna_real * s_ancho + margen
+        columna_real_fin = columna_real_inicial + parche_ancho
+
+        # Límites donde se pega el parche en zeros
+        fila_mosaico_inicial = fila_mosaico * s_alto + margen
+        fila_mosaico_fin = fila_mosaico_inicial + parche_alto
+        columna_mosaico_inicial = columna_mosaico * s_ancho + margen
+        columna_mosaico_fin = columna_mosaico_inicial + parche_ancho
+
+        # Copiar parche útil al lienzo
+        zeros[
+            fila_mosaico_inicial:fila_mosaico_fin,
+            columna_mosaico_inicial:columna_mosaico_fin,
+        ] = sub_imagen[
+            fila_real_inicial:fila_real_fin,
+            columna_real_inicial:columna_real_fin,
+        ]
+
+        # Guardar identificador (convención desde 1: k + 1)
+        matriz_identificadores[fila_real, columna_real] = k + 1
+
+    # Anclaje aleatorio en convención desde 1: ((r_s, c_s), (r_t, c_t))
+    k_anclaje = int(rng.integers(0, R * C))
+    indice_real_anclaje = int(permutacion[k_anclaje])
+
+    fila_anclaje_s = (k_anclaje // C) + 1
+    columna_anclaje_s = (k_anclaje % C) + 1
+    fila_anclaje_t = (indice_real_anclaje // C) + 1
+    columna_anclaje_t = (indice_real_anclaje % C) + 1
+
+    anclaje = ((fila_anclaje_s, columna_anclaje_s),
+               (fila_anclaje_t, columna_anclaje_t))
+
+    return (zeros, matriz_identificadores, anclaje)
 
 
 if __name__ == "__main__":
+    carpeta_actual = os.path.dirname(__file__)
     path_imagen = "test.jpg"
     imagen = verificar_imagen(path_imagen)
-    verificar_medidas(imagen, 9, 9, 3)
+    tupla_s_p = verificar_medidas(imagen, 9, 9, 3)
+    mosaico, matriz_identificadores, anclaje = generar_mosaico(
+        imagen, tupla_s_p, seed=42)
+
+    io.imsave(os.path.join(carpeta_actual, "mosaico.png"), mosaico)
+    np.savez(
+        os.path.join(carpeta_actual, "referencia.npz"),
+        P_GT=matriz_identificadores,
+        anclaje=np.array(anclaje),
+    )
