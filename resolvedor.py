@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+from estimador_d import estimar_d
+
 
 class Resolvedor:
     def __init__(self, img, r, c, anclaje):
@@ -8,11 +10,12 @@ class Resolvedor:
         self.final_img = None
         self.r = r
         self.c = c
-        self.anclaje = anclaje
+        self.pos_og_pieza_ancl = anclaje[0]
+        self.pos_new_pieza_ancl = anclaje[1]
         self.d = None
 
     def estimar_d(self):
-        pass
+        self.d = estimar_d(self.img, self.r, self.c)
 
     def obtener_ubi_celdas(self):
         if self.d is None:
@@ -28,9 +31,12 @@ class Resolvedor:
                 self.ubicacion_init_celdas[n, m] = (row, col)
  
 
+    def resolver_imagen(self):
+        for pos_celda in self.ubicacion_init_celdas:
+            pass
 
 
-    def comparar_borde(borde, pos):
+    def comparar_borde(self, borde, pos):
         #pos posible
         #arriba = 0, derecha = 1, abajo = 2, izquierda = 3
         pass

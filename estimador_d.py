@@ -1,4 +1,3 @@
-
 import numpy as np
 def estimar_d(mosaico, R, C):
     
