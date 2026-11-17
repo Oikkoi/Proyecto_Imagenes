@@ -14,6 +14,7 @@ class Resolvedor:
         self.pos_new_pieza_ancl = (anclaje[1][0] - 1, anclaje[1][1] - 1)
         self.d = None
         self.plano_real = np.full((r, c), None, dtype=object)
+        self.VALOR_BORDE = 30
     
     def estimar_d(self):
         self.d = estimar_d(self.img, self.r, self.c)
@@ -41,9 +42,9 @@ class Resolvedor:
     def resolver_imagen(self):
         s_y, s_x = self.tamaño_celda
         y, x = self.pos_og_real
-        borde_up    = self.img[y, x : x + s_x]
-        borde_down  = self.img[y + s_y - 1, x : x + s_x]
-        borde_left  = self.img[y : y + s_y, x]
+        borde_up = self.img[y, x : x + s_x]
+        borde_down = self.img[y + s_y - 1, x : x + s_x]
+        borde_left = self.img[y : y + s_y, x]
         borde_right = self.img[y : y + s_y, x + s_x - 1]
         s = self.comparar_borde(borde_down, 0)
         d = self.comparar_borde(borde_right, 1)
@@ -75,7 +76,26 @@ class Resolvedor:
         #pos posible
         #abajo = 0, derecha = 1, arriba = 2, izquierda = 3
         #dara None si no hay y la pos si hay 
-        pass
+        s_y, s_x = self.tamaño_celda
+        best = None
+        best_diff = 255 * 3
+        for pos in self.ubicacion_init_celdas:
+            x, y = pos
+            if pos == 0:
+                borde_comp = self.img[y, x : x + s_x]
+            if pos == 2:
+                borde_comp = self.img[y + s_y - 1, x : x + s_x]
+            if pos == 1:
+                borde_comp = self.img[y : y + s_y, x]
+            if pos == 3:
+                borde_comp = self.img[y : y + s_y, x + s_x - 1]
+
+            diff = borde_comp - borde
+            if sum(diff) < self.VALOR_BORDE:
+                if sum(diff) < best_diff:
+                    best = pos
+                    best_diff = sum(diff)
+        return best
 
 
 
