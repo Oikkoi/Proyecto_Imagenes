@@ -32,16 +32,13 @@ class Resolvedor:
             for m in range(self.c):
                 col = width_celda * m + q
                 self.ubicacion_init_celdas[n, m] = (row, col)
-                if (n, m) == self.pos_og_pieza_ancl:
-                    self.pos_og_real = (row, col)
-                    self.plano_real[n, m] = (row, col)
-                    self.row_og = n
-                    self.col_og = m
+        row_real, col_real = self.pos_new_pieza_ancl
+        self.plano_real[row_real, col_real] = self.pos_og_pieza_ancl
 
 
     def resolver_imagen(self):
         s_y, s_x = self.tamaño_celda
-        y, x = self.pos_og_real
+        y, x = self.ubicacion_init_celdas[self.pos_og_pieza_ancl]
         borde_up = self.img[y, x : x + s_x]
         borde_down = self.img[y + s_y - 1, x : x + s_x]
         borde_left = self.img[y : y + s_y, x]
@@ -79,6 +76,7 @@ class Resolvedor:
         s_y, s_x = self.tamaño_celda
         best = None
         best_diff = 255 * 3
+        borde_f = borde.astype(np.float32)
         for pos in self.ubicacion_init_celdas:
             x, y = pos
             if pos == 0:
@@ -90,11 +88,10 @@ class Resolvedor:
             if pos == 3:
                 borde_comp = self.img[y : y + s_y, x + s_x - 1]
 
-            diff = borde_comp - borde
-            if sum(diff) < self.VALOR_BORDE:
-                if sum(diff) < best_diff:
+            diff = np.mean(np.abs(borde_comp.astype(np.float32) - borde_f))
+            if diff < self.VALOR_BORDE and diff < best_diff:
                     best = pos
-                    best_diff = sum(diff)
+                    best_diff = diff
         return best
 
 
