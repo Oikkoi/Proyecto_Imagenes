@@ -1,3 +1,4 @@
+
 import numpy as np
 def estimar_d(mosaico, R, C):
     
@@ -16,7 +17,7 @@ def estimar_d(mosaico, R, C):
             continue
 
         if d == 0:
-            return 0  # No hay márgenes que comprobar.
+            return 0  # No habrian mas margenes que revisar
 
         q = d // 2
         posterior = d - q
@@ -34,3 +35,25 @@ def estimar_d(mosaico, R, C):
         ):
             return d
     raise ValueError("No hay ningún d compatible con el mosaico y la grilla.")
+
+
+# Me faltaba esto, para usarlo hay que simplemente llamar a extraer_parches() con d = estimar_d()
+def extraer_parches(mosaico, R, C, d):
+    H, W = mosaico.shape[:2]
+    if H % R != 0 or W % C != 0:
+        raise ValueError("El tamaño del mosaico no es divisible por la grilla.")
+
+    s_h, s_w = H // R, W // C
+    p_h, p_w = s_h - d, s_w - d
+    q = d // 2
+    parches = np.empty((R * C, p_h, p_w, 3), dtype=mosaico.dtype)
+
+    # id =  r*C + c + 1.
+    for r in range(R):
+        for c in range(C):
+            fila = r * s_h + q
+            col = c * s_w + q
+            parches[r * C + c] = mosaico[fila:fila + p_h, col:col + p_w]
+
+    return parches
+
