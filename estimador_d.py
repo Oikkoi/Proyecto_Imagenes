@@ -3,7 +3,9 @@ def estimar_d(mosaico, R, C):
     
 
     H, W, _ = mosaico.shape
-    
+    if H % R != 0 or W % C != 0:
+        raise ValueError("El tamaño del mosaico no es divisible por la grilla.")
+
     s_h, s_w = H // R, W // C
 
     # Ejes = fila de celda, fila local, columna de celda, columna local, RGB.
@@ -14,7 +16,7 @@ def estimar_d(mosaico, R, C):
             continue
 
         if d == 0:
-            return 0  # No habrian mas margenes que revisar
+            return 0  # No hay márgenes que comprobar.
 
         q = d // 2
         posterior = d - q
@@ -31,3 +33,4 @@ def estimar_d(mosaico, R, C):
             or np.any(derecho)
         ):
             return d
+    raise ValueError("No hay ningún d compatible con el mosaico y la grilla.")
